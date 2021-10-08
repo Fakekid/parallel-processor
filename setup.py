@@ -2,11 +2,16 @@
 
 from setuptools import setup
 
+with open("README.md", "r") as fin:
+    long_description = fin.read()
+
 setup(name='parallel_processor',
       # namespace_packages=['datasci'],
-      version='0.1.1',
+      version='0.1.3',
       description='Parallelling Data Processor',
-      url='',
+      long_description=long_description,
+      long_description_content_type="text/markdown",
+      url='https://github.com/Fakekid/parallel-processor',
       author='lianxiaolei,wangyue',
       author_email='lian222@foxmail.com,wangyue29@tal.com',
       license='MIT',

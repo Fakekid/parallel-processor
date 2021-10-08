@@ -1,16 +1,33 @@
 # 介绍
+
 我们提供了一个可快速处理大量数据的多进程数据处理模块
+
 此模块可以处理list、numpy、pandas等数据，并且可以以tuple的形式输入，以tuple的形式输出
+
 中间的处理过程可以让用户来决定，只要传入一个自定义函数即可
+
 可设置进程数
+
 ----------------------------
+
 # 作者
-连晓磊 lian222@foxmail.com
-王岳   wangyue29@tal.com
+
+* 连晓磊 lian222@foxmail.com
+* 王岳   wangyue29@tal.com
+
 ----------------------------
 # 样例
-样例1：分词
+
+引入：
+```python
+from parallel_processor import process_data
+
+# 注意在向进程池传入处理函数时，不能使用lambda的方式，否则会报错
+from functools import partial
 ```
+
+样例1：分词
+```python
 def seg(x):
     result = []
     for i in tqdm_notebook(x):
@@ -19,9 +36,11 @@ def seg(x):
 
 data = process_data(data, seg, num_workers=16)
 ```
+
 -------------
+
 样例2：text2ids
-```
+```python
 def convert_example(x, f_token, max_seq_len, return_raw_data=False, mask_rate=0, x1=None, avg_split=False):
     input_ids_list = []
     input_mask_list = []
