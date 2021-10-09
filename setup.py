@@ -17,6 +17,7 @@ setup(name='parallel_processor',
       license='MIT',
       include_package_data=False,
       packages=['parallel_processor'],
+      python_requires='>=3.6',
       install_requires=[  # 依赖列表
           'numpy>=1.14.3',
       ],
