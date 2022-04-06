@@ -138,9 +138,11 @@ def process_data(data, op_func, num_workers=1, **kwargs):
     else:
         # 计算每个进程处理的数据量
         if is_tuple_data:
-            data_len = len(data[0])
+            data_len = data[0].shape[0]
+            # data_len = len(data[0])
         else:
-            data_len = len(data)
+            data_len = data.shape[0]
+            # data_len = len(data)
 
         batch_size = math.ceil(data_len / num_workers)
         # 按照单进程数据量对数据集进行切分，当数据量不能被进程数整除时，最后一个进程会和其它进程处理的数据量不同
