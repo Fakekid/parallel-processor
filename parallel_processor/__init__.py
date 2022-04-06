@@ -113,13 +113,14 @@ def _process_data_subprocessing(idx, manager_dict, data, op_func, kwargs):
     manager_dict[idx] = op_func(data, **kwargs)
 
 
-def process_data(data, op_func, num_workers=1, **kwargs):
+def process_data(data, op_func, num_workers=1, data_type='list', **kwargs):
     """
         多进程处理数据
     Args:
-        data: 输入数据
-        op_func: 处理函数
+        data: 输入数据（可以是一个ndarray、list以及一个tuple(e.g. (X, Y)，当输入数据为tuple时，需要设置参数is_tuple_data为True )）
+        op_func: 处理函数，用于操作数据
         num_workers: 进程数
+        data_type: 数据类型（'array'|'list', default 'list'）
         **kwargs: 其它参数
 
     Returns:
@@ -138,11 +139,9 @@ def process_data(data, op_func, num_workers=1, **kwargs):
     else:
         # 计算每个进程处理的数据量
         if is_tuple_data:
-            data_len = data[0].shape[0]
-            # data_len = len(data[0])
+            data_len = len(data[0])
         else:
-            data_len = data.shape[0]
-            # data_len = len(data)
+            data_len = len(data)
 
         batch_size = math.ceil(data_len / num_workers)
         # 按照单进程数据量对数据集进行切分，当数据量不能被进程数整除时，最后一个进程会和其它进程处理的数据量不同
@@ -158,11 +157,19 @@ def process_data(data, op_func, num_workers=1, **kwargs):
         # 向进程池分发任务
         for idx in range(len(batch_idxs)):
             # 分批将数据放入进程
-            _ = pool.apply_async(_process_data_subprocessing,
-                                 (idx, manager_dict,
-                                  data[batch_idxs[idx]] if not is_tuple_data else [item[batch_idxs[idx]] for item in
-                                                                                   data],
-                                  op_func, func_kwargs), error_callback=throw_error)
+            if data_type == 'array':
+                _ = pool.apply_async(_process_data_subprocessing,
+                                     (idx, manager_dict,
+                                      data[batch_idxs[idx]] if not is_tuple_data else [item[batch_idxs[idx]] for item in
+                                                                                       data],
+                                      op_func, func_kwargs), error_callback=throw_error)
+            elif data_type == 'list':
+                _ = pool.apply_async(_process_data_subprocessing,
+                                     (idx, manager_dict,
+                                      [data[j] for j in batch_idxs[idx]] if not is_tuple_data else [
+                                          [item[j] for j in batch_idxs[idx]] for item in data],
+                                      op_func, func_kwargs), error_callback=throw_error)
+
         pool.close()
         pool.join()
 

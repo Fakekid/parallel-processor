@@ -7,7 +7,7 @@ with open("README.md", "r") as fin:
 
 setup(name='parallel_processor',
       # namespace_packages=['datasci'],
-      version='0.1.3',
+      version='0.1.5',
       description='Parallelling Data Processor',
       long_description=long_description,
       long_description_content_type="text/markdown",
