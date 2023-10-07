@@ -6,14 +6,13 @@ with open("README.md", "r") as fin:
     long_description = fin.read()
 
 setup(name='parallel_processor',
-      # namespace_packages=['datasci'],
       version='0.1.6',
       description='Parallelling Data Processor',
       long_description=long_description,
       long_description_content_type="text/markdown",
       url='https://github.com/Fakekid/parallel-processor',
-      author='lianxiaolei,wangyue',
-      author_email='lian222@foxmail.com,wangyue29@tal.com',
+      author='lianxiaolei,wangyue,gongtingting',
+      author_email='lian19931201@gmail.com,wangyue29@tal.com,gongtingting@safeis.com',
       license='MIT',
       include_package_data=False,
       packages=['parallel_processor'],
