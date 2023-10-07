@@ -15,6 +15,7 @@
 import numpy as np
 import math
 import multiprocessing
+import copy
 
 
 def _process_data_subprocessing(idx, manager_dict, data, op_func, kwargs):
@@ -81,28 +82,44 @@ def process_data(data, op_func, num_workers=1, data_type='list', **kwargs):
         pool.close()
         pool.join()
 
-        data = []
-        seg_locale = [0]  # 当数据为tuple时，用于记录合并后再分割时的index
-        subprocess_result = None
-        for idx in range(len(batch_idxs)):
-            subprocess_result = manager_dict.get(idx)
-            # 判断自定义函数返回的数据是否为tuple，如果是tuple，则此函数也会返回多个值
-            # 例如自定义函数最后是`return (input_ids_batch, segment_ids_batch, input_mask_batch)`，
-            # 则此函数最终返回结果是(input_ids_all, segment_ids_all, input_mask_all)
-            if isinstance(subprocess_result, tuple):
-                if idx == 0:
-                    for item in subprocess_result[:-1]:
-                        seg_locale.append(item.shape[1] + seg_locale[-1])
-                    seg_locale = seg_locale[1:]
-                # 将tuple数据拼接成一个大ndarray
-                tmp_data = np.concatenate(subprocess_result, axis=1)
-            else:
-                tmp_data = subprocess_result
-            data.append(tmp_data)
-        # 将最后一个batch的拼接起来
-        data = np.concatenate(data, axis=0)
+        # 获取每个进程的结果数据
+        sub_data = [manager_dict.get(idx) for idx in range(len(batch_idxs))]
 
-        if isinstance(subprocess_result, tuple):
-            # 将拼接后的ndarray再拆分成tuple
-            data = np.split(data, seg_locale, axis=1)
+        data = copy.copy(sub_data[0])
+
+        low_memory = kwargs.get('low_memory')
+
+        # 低内存模式，不使用np进行数据组装
+        if low_memory:
+            # 判断数据的格式
+            if is_tuple_data:
+                # [(d1, d2), (d1, d2), ...]
+                [[data[j].extend(jtem) for j, jtem in enumerate(item)] for item in sub_data]
+            else:
+                [data.extend(item) for item in sub_data]
+        else:  # 使用np进行数据组装，速度快，内存占用高
+            data = []
+            seg_locale = [0]  # 当数据为tuple时，用于记录合并后再分割时的index
+            subprocess_result = None
+            for idx in range(len(batch_idxs)):
+                subprocess_result = manager_dict.get(idx)
+                # 判断自定义函数返回的数据是否为tuple，如果是tuple，则此函数也会返回多个值
+                # 例如自定义函数最后是`return (input_ids_batch, segment_ids_batch, input_mask_batch)`，
+                # 则此函数最终返回结果是(input_ids_all, segment_ids_all, input_mask_all)
+                if isinstance(subprocess_result, tuple):
+                    if idx == 0:
+                        for item in subprocess_result[:-1]:
+                            seg_locale.append(item.shape[1] + seg_locale[-1])
+                        seg_locale = seg_locale[1:]
+                    # 将tuple数据拼接成一个大ndarray
+                    tmp_data = np.concatenate(subprocess_result, axis=1)
+                else:
+                    tmp_data = subprocess_result
+                data.append(tmp_data)
+            # 将最后一个batch的拼接起来
+            data = np.concatenate(data, axis=0)
+
+            if isinstance(subprocess_result, tuple):
+                # 将拼接后的ndarray再拆分成tuple
+                data = np.split(data, seg_locale, axis=1)
     return data
